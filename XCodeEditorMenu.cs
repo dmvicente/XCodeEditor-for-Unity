@@ -16,7 +16,7 @@ namespace UnityEditor.XCodeEditor
 //			Debug.Log( "XcodePath: " + projectPath );
 			
 //			XCProject currentProject = new XCProject( projectPath );
-			XCProject.ApplyMod( projectPath, "/Users/Elyn/Projects/UnityPlugins/Unity Sandbox Project/Assets/Modules/GameCenter/Editor/iOS/GameCenter.projmods" );
+//			XCProject.ApplyMod( projectPath, "/Users/Elyn/Projects/UnityPlugins/Unity Sandbox Project/Assets/Modules/GameCenter/Editor/iOS/GameCenter.projmods" );
 			
 			//Debug.Log(
 //			PBXDictionary test = new PBXDictionary();
