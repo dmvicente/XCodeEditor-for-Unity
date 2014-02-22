@@ -23,7 +23,7 @@ namespace UnityEditor.XCodeEditor
 		{
 		}
 		
-		public bool SetWeakLink( bool weak = false )
+		public void SetWeakLink( bool weak)
 		{
 			PBXDictionary settings = null;
 			PBXList attributes = null;
@@ -38,13 +38,12 @@ namespace UnityEditor.XCodeEditor
 			if (weak) {
 				if (settings == null) {
 					settings = new PBXDictionary();
-					settings.internalNewlines = false;
+		
 					_data.Add(SETTINGS_KEY, settings);
 				}
 				
 				if (attributes == null) {
 					attributes = new PBXList();
-					attributes.internalNewlines = false;
 					attributes.Add(WEAK_VALUE);
 					settings.Add(ATTRIBUTES_KEY, attributes);
 				}
