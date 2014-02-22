@@ -17,24 +17,10 @@ namespace UnityEditor.XCodeEditor
 			
 			this.Add( FILE_REF_KEY, fileRef.guid );
 			SetWeakLink( weak );
-			
-//    def Create(cls, file_ref, weak=False):
-//        if isinstance(file_ref, PBXFileReference):
-//            file_ref = file_ref.id
-//
-//        bf = cls()
-//        bf.id = cls.GenerateId()
-//        bf['fileRef'] = file_ref
-//
-//        if weak:
-//            bf.set_weak_link(True)
-//
-//        return bf
 		}
 		
 		public PBXBuildFile( string guid, PBXDictionary dictionary ) : base ( guid, dictionary )
 		{
-//			Debug.Log( "constructor child" );
 		}
 		
 		public bool SetWeakLink( bool weak = false )
@@ -42,44 +28,32 @@ namespace UnityEditor.XCodeEditor
 			PBXDictionary settings = null;
 			PBXList attributes = null;
 			
-			if( !_data.ContainsKey( SETTINGS_KEY ) ) {
-				if( weak ) {
-					attributes = new PBXList();
-					attributes.Add( WEAK_VALUE );
-					
+			if (_data.ContainsKey (SETTINGS_KEY)) {
+				settings = _data[SETTINGS_KEY] as PBXDictionary;
+				if (settings.ContainsKey(ATTRIBUTES_KEY)) {
+					attributes = settings[ATTRIBUTES_KEY] as PBXList;
+				}
+			}
+			
+			if (weak) {
+				if (settings == null) {
 					settings = new PBXDictionary();
-					settings.Add( ATTRIBUTES_KEY, attributes );
+					settings.internalNewlines = false;
+					_data.Add(SETTINGS_KEY, settings);
 				}
-				return true;
-			}
-			
-			settings = _data[ SETTINGS_KEY ] as PBXDictionary;
-			if( !settings.ContainsKey( ATTRIBUTES_KEY ) ) {
-				if( weak ) {
+				
+				if (attributes == null) {
 					attributes = new PBXList();
-					attributes.Add( WEAK_VALUE );
-					settings.Add( ATTRIBUTES_KEY, attributes );
-					return true;
-				}
-				else {
-					return false;
+					attributes.internalNewlines = false;
+					attributes.Add(WEAK_VALUE);
+					settings.Add(ATTRIBUTES_KEY, attributes);
 				}
 			}
 			else {
-				attributes = settings[ ATTRIBUTES_KEY ] as PBXList;
+				if(attributes != null  && attributes.Contains(WEAK_VALUE)) {
+					attributes.Remove(WEAK_VALUE);
+				}
 			}
-			
-			if( weak ) {
-				attributes.Add( WEAK_VALUE );
-			}
-			else {
-				attributes.Remove( WEAK_VALUE );
-			}
-			
-			settings.Add( ATTRIBUTES_KEY, attributes );
-			this.Add( SETTINGS_KEY, settings );
-			
-			return true;
 		}
 		
 		public bool AddCompilerFlag( string flag )
