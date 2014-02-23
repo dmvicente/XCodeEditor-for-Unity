@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using MiniJSON;
 
@@ -8,7 +9,7 @@ namespace UnityEditor.XCodeEditor
 	public class XCMod  
 	{
 		private Hashtable _datastore;
-		private ArrayList _libs;
+		private List<object> _libs;
 		
 		public string name { get; private set; }
 		public string path { get; private set; }
@@ -19,17 +20,20 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public ArrayList patches {
+		public List<object> patches {
 			get {
-				return (ArrayList)_datastore["patches"];
+				return (List<object>)_datastore["patches"];
 			}
 		}
 		
-		public ArrayList libs {
+		public List<object> libs {
 			get {
 				if( _libs == null ) {
-					_libs = new ArrayList( ((ArrayList)_datastore["libs"]).Count );
-					foreach( string fileRef in (ArrayList)_datastore["libs"] ) {
+					List<object> libsCast = (List<object>)_datastore["libs"];
+					int count = libsCast.Count;
+					
+					_libs = new List<object>( count );
+					foreach( string fileRef in libsCast ) {
 						_libs.Add( new XCModFile( fileRef ) );
 					}
 				}
@@ -37,33 +41,33 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public ArrayList frameworks {
+		public List<object> frameworks {
 			get {
-				return (ArrayList)_datastore["frameworks"];
+				return (List<object>)_datastore["frameworks"];
 			}
 		}
 		
-		public ArrayList headerpaths {
+		public List<object> headerpaths {
 			get {
-				return (ArrayList)_datastore["headerpaths"];
+				return (List<object>)_datastore["headerpaths"];
 			}
 		}
 		
-		public ArrayList files {
+		public List<object> files {
 			get {
-				return (ArrayList)_datastore["files"];
+				return (List<object>)_datastore["files"];
 			}
 		}
 		
-		public ArrayList folders {
+		public List<object> folders {
 			get {
-				return (ArrayList)_datastore["folders"];
+				return (List<object>)_datastore["folders"];
 			}
 		}
 		
-		public ArrayList excludes {
+		public string[] excludes {
 			get {
-				return (ArrayList)_datastore["excludes"];
+				return ((List<object>)_datastore["excludes"]).ConvertAll<string>((obj) => (string)obj).ToArray();
 			}
 		}
 		
@@ -78,7 +82,8 @@ namespace UnityEditor.XCodeEditor
 			this.path = path;
 			
 			string contents = projectFileInfo.OpenText().ReadToEnd();
-			_datastore = (Hashtable)Json.Deserialize( contents );
+			var jsonDict = Json.Deserialize (contents) as Dictionary<string, object>;
+			_datastore = new Hashtable (jsonDict);
 		
 		}
 	}
