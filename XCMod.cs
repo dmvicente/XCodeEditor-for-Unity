@@ -1,12 +1,12 @@
 using UnityEngine;
+using MiniJSON;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using MiniJSON;
 
 namespace UnityEditor.XCodeEditor 
 {
-	public class XCMod  
+	public class XCMod 
 	{
 		private Hashtable _datastore;
 		private List<object> _libs;
@@ -20,7 +20,8 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public List<object> patches {
+		public List<object> patches
+		{
 			get {
 				return (List<object>)_datastore["patches"];
 			}
@@ -77,13 +78,13 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public string[] excludes {
+		public List<string> excludes {
 			get {
-				return ((List<object>)_datastore["excludes"]).ConvertAll<string>((obj) => (string)obj).ToArray();
+				return ((List<object>)_datastore["excludes"]).ConvertAll((obj)=> (string)obj);
 			}
 		}
 		
-		public XCMod( string path, string filename )
+		public XCMod( string projectPath, string filename )
 		{	
 			FileInfo projectFileInfo = new FileInfo( filename );
 			if( !projectFileInfo.Exists ) {
@@ -91,13 +92,20 @@ namespace UnityEditor.XCodeEditor
 			}
 			
 			name = System.IO.Path.GetFileNameWithoutExtension( filename );
-			this.path = path;
+			path = projectPath;//System.IO.Path.GetDirectoryName( filename );
 			
 			string contents = projectFileInfo.OpenText().ReadToEnd();
-			var jsonDict = Json.Deserialize (contents) as Dictionary<string, object>;
-			_datastore = new Hashtable (jsonDict);
-		
+			Dictionary<string, object> dictJson = Json.Deserialize(contents) as Dictionary<string,object>;
+			_datastore = new Hashtable(dictJson);
+
+			//append file paterns that should always be ignored
+			List<object> excludes = (List<object>)_datastore ["excludes"];
+			excludes.AddRange(new List<object>(){"^.*\\.meta$", "^.*\\.mdown^", "^.*\\.pdf$", ".DS_Store", "^.*\\.projmods"});
+			_datastore ["excludes"] = excludes;
 		}
+		
+		
+		
 	}
 	
 	public class XCModFile

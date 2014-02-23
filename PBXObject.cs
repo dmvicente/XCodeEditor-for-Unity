@@ -13,7 +13,7 @@ namespace UnityEditor.XCodeEditor
 
 		private static string guidRegex = @"[A-Fa-f0-9]{24}\s*/\*[^*]+\*/";
 
-		public bool internalNewLines;
+		public bool internalNewlines;
 		
 		#region Properties
 		
@@ -44,7 +44,7 @@ namespace UnityEditor.XCodeEditor
 			_data = new PBXDictionary();
 			_data[ ISA_KEY ] = this.GetType().Name;
 			_guid = GenerateGuid();
-			internalNewLines = false;
+			internalNewlines = false;
 		}
 		
 		public PBXObject( string guid ) : this()
@@ -95,6 +95,10 @@ namespace UnityEditor.XCodeEditor
 		{
 			return _data.ContainsKey( key );
 		}
+
+		public object GetObjectForKey(string key) {
+			return _data[key];
+		}
 		
 		#endregion
 	}
@@ -102,11 +106,11 @@ namespace UnityEditor.XCodeEditor
 	public class PBXNativeTarget : PBXObject
 	{
 		public PBXNativeTarget() : base() {
-			internalNewLines = true;
+			internalNewlines=true;
 		}
 		
 		public PBXNativeTarget( string guid, PBXDictionary dictionary ) : base( guid, dictionary ) {	
-			internalNewLines = true;
+			internalNewlines = true;
 		}
 	}
 

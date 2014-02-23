@@ -6,7 +6,12 @@ namespace UnityEditor.XCodeEditor
 {
 	public class PBXDictionary : Dictionary<string, object>
 	{
-		public bool internalNewLines = true;
+		public bool internalNewlines;
+
+		public PBXDictionary() : base()
+		{
+			internalNewlines = true;
+		}
 
 		public void Append( PBXDictionary dictionary )
 		{
