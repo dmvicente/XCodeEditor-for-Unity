@@ -1,20 +1,12 @@
 using UnityEngine;
 using System.Collections;
 using System.IO;
-using Json = MiniJSON;
+using MiniJSON;
 
 namespace UnityEditor.XCodeEditor 
 {
-	public class XCMod 
+	public class XCMod  
 	{
-//		private string group;
-//		private ArrayList patches;
-//		private ArrayList libs;
-//		private ArrayList frameworks;
-//		private ArrayList headerpaths;
-//		private ArrayList files;
-//		private ArrayList folders;
-//		private ArrayList excludes;
 		private Hashtable _datastore;
 		private ArrayList _libs;
 		
@@ -75,7 +67,7 @@ namespace UnityEditor.XCodeEditor
 			}
 		}
 		
-		public XCMod( string filename )
+		public XCMod( string path, string filename )
 		{	
 			FileInfo projectFileInfo = new FileInfo( filename );
 			if( !projectFileInfo.Exists ) {
@@ -83,35 +75,12 @@ namespace UnityEditor.XCodeEditor
 			}
 			
 			name = System.IO.Path.GetFileNameWithoutExtension( filename );
-			path = System.IO.Path.GetDirectoryName( filename );
+			this.path = path;
 			
 			string contents = projectFileInfo.OpenText().ReadToEnd();
-			_datastore = (Hashtable)MiniJSON.jsonDecode( contents );
-			
-//			group = (string)_datastore["group"];
-//			patches = (ArrayList)_datastore["patches"];
-//			libs = (ArrayList)_datastore["libs"];
-//			frameworks = (ArrayList)_datastore["frameworks"];
-//			headerpaths = (ArrayList)_datastore["headerpaths"];
-//			files = (ArrayList)_datastore["files"];
-//			folders = (ArrayList)_datastore["folders"];
-//			excludes = (ArrayList)_datastore["excludes"];
+			_datastore = (Hashtable)Json.Deserialize( contents );
+		
 		}
-		
-			
-//	"group": "GameCenter",
-//	"patches": [],
-//	"libs": [],
-//	"frameworks": ["GameKit.framework"],
-//	"headerpaths": ["Editor/iOS/GameCenter/**"],					
-//	"files":   ["Editor/iOS/GameCenter/GameCenterBinding.m",
-//				"Editor/iOS/GameCenter/GameCenterController.h",
-//				"Editor/iOS/GameCenter/GameCenterController.mm",
-//				"Editor/iOS/GameCenter/GameCenterManager.h",
-//				"Editor/iOS/GameCenter/GameCenterManager.m"],
-//	"folders": [],	
-//	"excludes": ["^.*\\.meta$", "^.*\\.mdown^", "^.*\\.pdf$"]
-		
 	}
 	
 	public class XCModFile

@@ -853,9 +853,9 @@ namespace UnityEditor.XCodeEditor
 //		#endregion
 		#region Mods
 		
-		public void ApplyMod( string pbxmod )
+		public void ApplyMod(string path, string pbxmod )
 		{
-			XCMod mod = new XCMod( pbxmod );
+			XCMod mod = new XCMod( path, pbxmod );
 			ApplyMod( mod );
 		}
 		
