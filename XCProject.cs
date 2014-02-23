@@ -236,6 +236,20 @@ namespace UnityEditor.XCodeEditor
 			return modified;	
 		}
 		
+		public bool AddLibrarySearchPaths( string path )
+		{
+			return AddLibrarySearchPaths (new PBXList(path));
+		}
+		
+		public bool AddLibrarySearchPaths( PBXList paths)
+		{
+			foreach( KeyValuePair<string, XCBuildConfiguration> buildConfig in buildConfigurations ) {
+				buildConfig.Value.AddLibrarySearchPaths( paths, false );
+			}
+			modified = true;
+			return modified;
+		}
+		
 		public bool AddHeaderSearchPaths( string path )
 		{
 			return AddHeaderSearchPaths( new PBXList( path ) );
@@ -244,32 +258,33 @@ namespace UnityEditor.XCodeEditor
 		public bool AddHeaderSearchPaths( PBXList paths )
 		{
 			foreach( KeyValuePair<string, XCBuildConfiguration> buildConfig in buildConfigurations ) {
-				buildConfig.Value.AddHeaderSearchPaths( paths );
+				buildConfig.Value.AddHeaderSearchPaths( paths, false );
 			}
 			modified = true;
 			return modified;
 		}
 		
-		public bool AddLibrarySearchPaths( string path )
+		public bool AddFrameworkSearchPaths( string path )
 		{
-			return AddLibrarySearchPaths( new PBXList( path ) );
+			return AddFrameworkSearchPaths( new PBXList( path ) );
 		}
 		
-		public bool AddLibrarySearchPaths( PBXList paths )
+		public bool AddFrameworkSearchPaths( PBXList paths )
 		{
 			foreach( KeyValuePair<string, XCBuildConfiguration> buildConfig in buildConfigurations ) {
-				buildConfig.Value.AddLibrarySearchPaths( paths );
+				buildConfig.Value.AddFrameworkSearchPaths( paths, false );
 			}
 			modified = true;
 			return modified;
 		}
 
+		
+		
 		public object GetObject( string guid )
 		{
 			return _objects[guid];
 		}
 
-		
 		public PBXDictionary AddFile( string filePath, PBXGroup parent = null, string tree = "SOURCE_ROOT", bool createBuildFiles = true, bool weak = false )
 		{
 			PBXDictionary results = new PBXDictionary();
@@ -373,7 +388,7 @@ namespace UnityEditor.XCodeEditor
 
 		}
 		
-		public bool AddFolder( string folderPath, PBXGroup parent = null, string[] exclude = null, bool recursive = true, bool createBuildFile = true )
+		public bool AddFolder( string folderPath, string rootModPath, PBXGroup parent = null, string[] exclude = null, bool recursive = true, bool createBuildFile = true )
 		{
 			if( !Directory.Exists( folderPath ) )
 				return false;
@@ -385,8 +400,11 @@ namespace UnityEditor.XCodeEditor
 			if( parent == null )
 				parent = rootGroup;
 			
-			// Create group
-			PBXGroup newGroup = GetGroup( sourceDirectoryInfo.Name, null /*relative path*/, parent );
+			//Do not create a new group if we are adding the root directory of the current parent
+			PBXGroup newGroup = parent;
+			if (folderPath != rootModPath) {
+				newGroup = GetGroup( sourceDirectoryInfo.Name, null /*relative path*/, parent );
+			}
 			
 			foreach( string directory in Directory.GetDirectories( folderPath ) )
 			{
@@ -401,7 +419,7 @@ namespace UnityEditor.XCodeEditor
 				
 				if( recursive ) {
 					Debug.Log( "recursive" );
-					AddFolder( directory, newGroup, exclude, recursive, createBuildFile );
+					AddFolder( directory, rootModPath, newGroup, exclude, recursive, createBuildFile );
 				}
 			}
 			
@@ -489,21 +507,31 @@ namespace UnityEditor.XCodeEditor
 		
 		public void ApplyMod(string path, string pbxmod )
 		{
-			XCMod mod = new XCMod( path, pbxmod );
+			XCMod mod = new XCMod( System.IO.Path.GetFullPath(path), pbxmod );
 			ApplyMod( mod );
 		}
 		
+		internal static string AddXcodeQuotes(string path)
+		{
+			return "\"\\\"" + path + "\\\"\"";
+		}
+
 		public void ApplyMod( XCMod mod )
 		{	
 			PBXGroup modGroup = this.GetGroup( mod.group );
 			
-			Debug.Log( "Adding libraries..." );
 			foreach( XCModFile libRef in mod.libs ) {
-				string completeLibPath = System.IO.Path.Combine( "usr/lib", libRef.filePath );
-				this.AddFile( completeLibPath, modGroup, "SDKROOT", true, libRef.isWeak );
+				string completeLibPath;
+				if(libRef.sourceTree.Equals("SDKROOT")) {
+					completeLibPath = System.IO.Path.Combine( "usr/lib", libRef.filePath );
+				}
+				else {
+					completeLibPath = System.IO.Path.Combine( mod.path, libRef.filePath );
+				}
+					
+				this.AddFile( completeLibPath, modGroup, libRef.sourceTree, true, libRef.isWeak );
 			}
 			
-			Debug.Log( "Adding frameworks..." );
 			PBXGroup frameworkGroup = this.GetGroup( "Frameworks" );
 			foreach( string framework in mod.frameworks ) {
 				string[] filename = framework.Split( ':' );
@@ -512,7 +540,6 @@ namespace UnityEditor.XCodeEditor
 				this.AddFile( completePath, frameworkGroup, "SDKROOT", true, isWeak );
 			}
 			
-			Debug.Log( "Adding files..." );
 			foreach( string filePath in mod.files ) {
 				string absoluteFilePath = System.IO.Path.Combine( mod.path, filePath );
 				this.AddFile( absoluteFilePath, modGroup );
@@ -521,13 +548,27 @@ namespace UnityEditor.XCodeEditor
 			Debug.Log( "Adding folders..." );
 			foreach( string folderPath in mod.folders ) {
 				string absoluteFolderPath = System.IO.Path.Combine( mod.path, folderPath );
-				this.AddFolder( absoluteFolderPath, modGroup, mod.excludes);
+				absoluteFolderPath = System.IO.Path.GetFullPath(absoluteFolderPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+				this.AddFolder( absoluteFolderPath, mod.path, modGroup, mod.excludes, false/*recursive*/);
 			}
 			
-			Debug.Log( "Adding headerpaths..." );
+			
 			foreach( string headerpath in mod.headerpaths ) {
-				string absoluteHeaderPath = System.IO.Path.Combine( mod.path, headerpath );
+				string absoluteHeaderPath = AddXcodeQuotes( System.IO.Path.Combine( mod.path, headerpath ) );
 				this.AddHeaderSearchPaths( absoluteHeaderPath );
+			}
+			
+			foreach( string librarypath in mod.librarysearchpaths ) {
+				string absolutePath = AddXcodeQuotes(System.IO.Path.Combine( mod.path, librarypath ));
+				this.AddLibrarySearchPaths( absolutePath );
+			}
+			
+			if(mod.frameworksearchpath != null)
+			{
+				foreach( string frameworksearchpath in mod.frameworksearchpath ) {
+					string absoluteHeaderPath = AddXcodeQuotes(System.IO.Path.Combine( mod.path, frameworksearchpath ));
+					this.AddFrameworkSearchPaths( absoluteHeaderPath );
+				}
 			}
 			
 			this.Consolidate();
@@ -539,19 +580,20 @@ namespace UnityEditor.XCodeEditor
 		public void Consolidate()
 		{
 			PBXDictionary consolidated = new PBXDictionary();
+			consolidated.internalNewLines = true;
 			consolidated.Append<PBXBuildFile>( this.buildFiles );
-			consolidated.Append<PBXGroup>( this.groups );
+			consolidated.Append<PBXCopyFilesBuildPhase>( this.copyBuildPhases );
 			consolidated.Append<PBXFileReference>( this.fileReferences );
-//			consolidated.Append<PBXProject>( this.project );
-			consolidated.Append<PBXNativeTarget>( this.nativeTargets );
 			consolidated.Append<PBXFrameworksBuildPhase>( this.frameworkBuildPhases );
+			consolidated.Append<PBXGroup>( this.groups );
+			consolidated.Append<PBXNativeTarget>( this.nativeTargets );
+			consolidated.Add( project.guid, project.data );
 			consolidated.Append<PBXResourcesBuildPhase>( this.resourcesBuildPhases );
 			consolidated.Append<PBXShellScriptBuildPhase>( this.shellScriptBuildPhases );
 			consolidated.Append<PBXSourcesBuildPhase>( this.sourcesBuildPhases );
-			consolidated.Append<PBXCopyFilesBuildPhase>( this.copyBuildPhases );
 			consolidated.Append<XCBuildConfiguration>( this.buildConfigurations );
 			consolidated.Append<XCConfigurationList>( this.configurationLists );
-			consolidated.Add( project.guid, project.data );
+			
 			_objects = consolidated;
 			consolidated = null;
 		}
@@ -575,9 +617,10 @@ namespace UnityEditor.XCodeEditor
 		public void Save()
 		{
 			PBXDictionary result = new PBXDictionary();
+			result.internalNewLines = true;
 			result.Add( "archiveVersion", 1 );
 			result.Add( "classes", new PBXDictionary() );
-			result.Add( "objectVersion", 45 );
+			result.Add( "objectVersion", 46 );
 			
 			Consolidate();
 			result.Add( "objects", _objects );
@@ -586,14 +629,10 @@ namespace UnityEditor.XCodeEditor
 			
 			Backup();
 			
-			// Parse result object directly into file
 			PBXParser parser = new PBXParser();
 			StreamWriter saveFile = File.CreateText( System.IO.Path.Combine( this.filePath, "project.pbxproj" ) );
 			saveFile.Write( parser.Encode( result) );
 			saveFile.Close();
-
-//			Xcode4Controller.Connect();
-//			Xcode4Controller.OpenProject(filePath);
 		}
 		
 		/**

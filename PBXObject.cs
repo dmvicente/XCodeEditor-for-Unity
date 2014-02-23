@@ -11,6 +11,8 @@ namespace UnityEditor.XCodeEditor
 		protected string _guid;
 		protected PBXDictionary _data;
 
+		private static string guidRegex = @"[A-Fa-f0-9]{24}\s*/\*[^*]+\*/";
+
 		public bool internalNewLines;
 		
 		#region Properties
@@ -67,7 +69,7 @@ namespace UnityEditor.XCodeEditor
 		
 		public static bool IsGuid( string aString )
 		{
-			return System.Text.RegularExpressions.Regex.IsMatch( aString, @"^[A-F0-9]{24}$" );
+			return System.Text.RegularExpressions.Regex.IsMatch( aString, guidRegex );
 		}
 		
 		public static string GenerateGuid()

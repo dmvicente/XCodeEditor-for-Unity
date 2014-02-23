@@ -241,6 +241,7 @@ namespace UnityEditor.XCodeEditor
 		private object ParseString()
 		{
 			string s = string.Empty;
+            s += "\"";
 			char c = StepForeward();
 			while( c != QUOTEDSTRING_END_TOKEN ) {
 				s += c;
@@ -250,8 +251,63 @@ namespace UnityEditor.XCodeEditor
 
 				c = StepForeward();
 			}
-
+            s += "\"";
 			return s;
+		}
+
+		//there has got to be a better way to do this
+		private string GetDataSubstring(int begin, int length)
+		{
+			string res = string.Empty;
+			
+			
+			for(int i=begin; i<begin+length && i<data.Length; i++)
+			{
+				res += data[i];
+			}
+			return res;
+		}
+
+		private int CountWhitespace(int pos)
+		{
+			int i=0;
+			for(int currPos=pos; currPos<data.Length && Regex.IsMatch( GetDataSubstring(currPos, 1), @"[;,\s=]" ); i++, currPos++) {}
+			return i;
+		}
+
+
+		private string ParseCommentFollowingWhitespace()
+		{
+			int currIdx = index+1;
+			int whitespaceLength = CountWhitespace(currIdx);
+			currIdx += whitespaceLength;
+			
+			if(currIdx + 1 >= data.Length)
+				return "";
+			
+			
+			
+			if(data[currIdx] == '/' && data[currIdx+1] == '*')
+			{
+				
+				while(!GetDataSubstring(currIdx, 2).Equals(COMMENT_END_TOKEN))
+				{
+					if(currIdx >= data.Length)
+					{
+						Debug.LogError("Unterminated comment found in .pbxproj file.  Bad things are probably going to start happening");
+						return "";
+					}
+					
+					currIdx++;
+				}
+				
+				return GetDataSubstring (index+1, (currIdx-index+1));
+				
+			}
+			else
+			{
+				return "";
+			}
 		}
 
 		private object ParseEntity()
@@ -260,6 +316,13 @@ namespace UnityEditor.XCodeEditor
 			
 			while( !Regex.IsMatch( Peek(), @"[;,\s=]" ) ) {
 				word += StepForeward();
+			}
+
+			string comment = ParseCommentFollowingWhitespace();
+			if(comment.Length > 0)
+			{
+				word += comment;
+				index += comment.Length;
 			}
 
 			if( word.Length != 24 && Regex.IsMatch( word, @"^\d+$" ) ) {
@@ -316,6 +379,9 @@ namespace UnityEditor.XCodeEditor
 			else if( value is PBXObject ) {
 				SerializeDictionary( ((PBXObject)value).data, builder, internalNewlines );
 			}
+                        else if( value is PBXDictionary ) {
+                                SerializeDictionary( (Dictionary<string, object>)value, builder, internalNewlines);
+                        }
 			else if( value is Dictionary<string, object> ) {
 				SerializeDictionary( (Dictionary<string, object>)value, builder, internalNewlines );
 			}
@@ -418,7 +484,7 @@ namespace UnityEditor.XCodeEditor
 		private bool SerializeString( string aString, StringBuilder builder, bool useQuotes = false, bool readable = false )
 		{
 			// Is a GUID?
-			if( Regex.IsMatch( aString, @"^[A-F0-9]{24}$" ) ) {
+			if (PBXObject.IsGuid(aString)) {
 				builder.Append( aString );
 				return true;
 			}
@@ -430,17 +496,9 @@ namespace UnityEditor.XCodeEditor
 				return true;
 			}
 
-			if( !Regex.IsMatch( aString, @"^[A-Za-z0-9_.]+$" ) ) {
-				useQuotes = true;
-			}
-
-			if( useQuotes )
-				builder.Append( QUOTEDSTRING_BEGIN_TOKEN );
 
 			builder.Append( aString );
 
-			if( useQuotes )
-				builder.Append( QUOTEDSTRING_END_TOKEN );
 
 			return true;
 		}

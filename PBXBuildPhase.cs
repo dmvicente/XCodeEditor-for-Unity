@@ -10,12 +10,12 @@ namespace UnityEditor.XCodeEditor
 		
 		public PBXBuildPhase() :base()
 		{
-//			Debug.Log( "base" );
+			internalNewLines = true;
 		}
 		
 		public PBXBuildPhase( string guid, PBXDictionary dictionary ) : base ( guid, dictionary )
 		{
-//			Debug.Log( "constructor " + GetType().Name );
+			internalNewLines = true;
 		}
 		
 		public bool AddBuildFile( PBXBuildFile file )

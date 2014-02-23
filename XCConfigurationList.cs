@@ -11,6 +11,7 @@ namespace UnityEditor.XCodeEditor
 //		string defaultConfigurationName;
 		
 		public XCConfigurationList( string guid, PBXDictionary dictionary ) : base( guid, dictionary ) {	
+			internalNewLines = true;
 		}
 	}
 }

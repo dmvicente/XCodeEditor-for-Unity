@@ -21,6 +21,34 @@ namespace UnityEditor.XCodeEditor
 		
 		public PBXBuildFile( string guid, PBXDictionary dictionary ) : base ( guid, dictionary )
 		{
+			if(!this.data.ContainsKey(SETTINGS_KEY))
+				return;
+			object settingsObj = this.data[SETTINGS_KEY];
+			
+			if(!(settingsObj is PBXDictionary))
+				return;
+			PBXDictionary settingsDict = (PBXDictionary) settingsObj;
+			settingsDict.internalNewLines = false;
+			
+			if( !settingsDict.ContainsKey(ATTRIBUTES_KEY) )
+				return;
+			object attributesObj = settingsDict[ATTRIBUTES_KEY];
+			
+			if(!(attributesObj is PBXList))
+				return;
+			
+			PBXList attributesCast = (PBXList)attributesObj;
+			attributesCast.internalNewLines = false;
+		}
+
+		public string getFileRefGuid() {
+			if (ContainsKey (FILE_REF_KEY)) {
+				object fileRefGuid = _data[FILE_REF_KEY];
+				if(fileRefGuid is string) {
+					return (string)fileRefGuid;
+				}
+			}
+			return "";
 		}
 		
 		public void SetWeakLink( bool weak)
@@ -56,16 +84,6 @@ namespace UnityEditor.XCodeEditor
 					attributes.Remove(WEAK_VALUE);
 				}
 			}
-		}
-
-		public string getFileRefGuid() {
-			if (ContainsKey (FILE_REF_KEY)) {
-				object fileRefGuid = _data[FILE_REF_KEY];
-				if(fileRefGuid is string) {
-					return (string)fileRefGuid;
-				}
-			}
-			return "";
 		}
 		
 		public bool AddCompilerFlag( string flag )

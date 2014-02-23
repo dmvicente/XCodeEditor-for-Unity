@@ -29,6 +29,7 @@ namespace UnityEditor.XCodeEditor
 			{ ".s", "sourcecode.asm" },
 			{ ".c", "sourcecode.c.c" },
 			{ ".cpp", "sourcecode.cpp.cpp" },
+			{ ".cs", "sourcecode.cpp.cpp" },
 			{ ".framework", "wrapper.framework" },
 			{ ".h", "sourcecode.c.h" },
 			{ ".icns", "image.icns" },
@@ -53,6 +54,7 @@ namespace UnityEditor.XCodeEditor
 			{ ".s", "PBXSourcesBuildPhase" },
 			{ ".c", "PBXSourcesBuildPhase" },
 			{ ".cpp", "PBXSourcesBuildPhase" },
+			{ ".cs", null },
 			{ ".framework", "PBXFrameworksBuildPhase" },
 			{ ".h", null },
 			{ ".icns", "PBXResourcesBuildPhase" },
@@ -78,7 +80,8 @@ namespace UnityEditor.XCodeEditor
 		
 		public PBXFileReference( string filePath, TreeEnum tree = TreeEnum.SOURCE_ROOT ) : base()
 		{
-			this.Add( PATH_KEY, filePath );
+			string temp = "\"" + filePath + "\"";
+			this.Add( PATH_KEY, temp );
 			this.Add( NAME_KEY, System.IO.Path.GetFileName( filePath ) );
 			this.Add( SOURCETREE_KEY, (string)( System.IO.Path.IsPathRooted( filePath ) ? trees[TreeEnum.ABSOLUTE] : trees[tree] ) );
 			this.GuessFileType();
@@ -97,7 +100,7 @@ namespace UnityEditor.XCodeEditor
 		{
 			this.Remove( EXPLICIT_FILE_TYPE_KEY );
 			this.Remove( LASTKNOWN_FILE_TYPE_KEY );
-			string extension = System.IO.Path.GetExtension( (string)_data[ PATH_KEY ] );
+			string extension = System.IO.Path.GetExtension( (string)_data[ NAME_KEY ] );
 			if( !PBXFileReference.typeNames.ContainsKey( extension ) ){
 				Debug.LogWarning( "Unknown file extension: " + extension + "\nPlease add extension and Xcode type to PBXFileReference.types" );
 				return;

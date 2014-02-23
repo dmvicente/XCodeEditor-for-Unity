@@ -25,11 +25,13 @@ namespace UnityEditor.XCodeEditor
 			else {
 				this.Add( SOURCETREE_KEY, "<group>" );
 			}
+
+			internalNewLines = true;
 		}
 		
 		public PBXGroup( string guid, PBXDictionary dictionary ) : base( guid, dictionary )
 		{
-			
+			internalNewLines = true;
 		}
 		
 		#endregion
