@@ -301,6 +301,14 @@ namespace UnityEditor.XCodeEditor
 			// TODO: Aggiungere controllo se file già presente
 			PBXFileReference fileReference = GetFile( System.IO.Path.GetFileName( filePath ) );	
 			if( fileReference != null ) {
+
+				//strong references should take precedence over weak references
+				if (!weak) {
+					PBXBuildFile buildFile = GetBuildFile(fileReference.guid);
+					if (null != buildFile) {
+						buildFile.SetWeakLink(false);
+					}
+				}
 				return null;
 			}
 			
@@ -430,6 +438,22 @@ namespace UnityEditor.XCodeEditor
 			
 			return null;
 		}
+
+		public PBXBuildFile GetBuildFile(string fileReferenceGuid) {
+
+			if( string.IsNullOrEmpty( fileReferenceGuid ) ) {
+				return null;
+			}
+
+			foreach (var buildFile in buildFiles) {
+				string _fileReferernceGuid = buildFile.Value.getFileRefGuid();
+				if (!string.IsNullOrEmpty(_fileReferernceGuid) && _fileReferernceGuid.CompareTo(fileReferenceGuid) == 0) {
+					return buildFile.Value;
+				}
+			}
+
+			return null;
+		}
 		
 		
 		public PBXGroup GetGroup( string name, string path = null, PBXGroup parent = null )
@@ -500,7 +524,7 @@ namespace UnityEditor.XCodeEditor
 			Debug.Log( "Adding folders..." );
 			foreach( string folderPath in mod.folders ) {
 				string absoluteFolderPath = System.IO.Path.Combine( mod.path, folderPath );
-				this.AddFolder( absoluteFolderPath, modGroup, (string[])mod.excludes.ToArray( typeof(string) ) );
+				this.AddFolder( absoluteFolderPath, modGroup, mod.excludes);
 			}
 			
 			Debug.Log( "Adding headerpaths..." );
