@@ -38,18 +38,21 @@ namespace UnityEditor.XCodeEditor
 			if (weak) {
 				if (settings == null) {
 					settings = new PBXDictionary();
-		
 					_data.Add(SETTINGS_KEY, settings);
 				}
+				settings.internalNewLines = false;
 				
 				if (attributes == null) {
 					attributes = new PBXList();
 					attributes.Add(WEAK_VALUE);
 					settings.Add(ATTRIBUTES_KEY, attributes);
 				}
+				attributes.internalNewLines = false;
 			}
 			else {
 				if(attributes != null  && attributes.Contains(WEAK_VALUE)) {
+					attributes.internalNewLines  = false;
+					settings.internalNewLines = false;
 					attributes.Remove(WEAK_VALUE);
 				}
 			}

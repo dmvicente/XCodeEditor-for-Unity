@@ -6,12 +6,15 @@ namespace UnityEditor.XCodeEditor
 {
 	public class PBXDictionary : Dictionary<string, object>
 	{
-		
+		public bool internalNewLines = true;
+
 		public void Append( PBXDictionary dictionary )
 		{
 			foreach( var item in dictionary) {
 				this.Add( item.Key, item.Value );
 			}
+
+			internalNewLines = dictionary.internalNewLines;
 		}
 		
 		public void Append<T>( PBXDictionary<T> dictionary ) where T : PBXObject

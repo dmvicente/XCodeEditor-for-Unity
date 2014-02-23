@@ -382,8 +382,6 @@ namespace UnityEditor.XCodeEditor
 			if( exclude == null )
 				exclude = new string[] {};
 			
-			PBXDictionary results = new PBXDictionary();
-			
 			if( parent == null )
 				parent = rootGroup;
 			
@@ -500,7 +498,6 @@ namespace UnityEditor.XCodeEditor
 			PBXGroup modGroup = this.GetGroup( mod.group );
 			
 			Debug.Log( "Adding libraries..." );
-			PBXGroup librariesGroup = this.GetGroup( "Libraries" );
 			foreach( XCModFile libRef in mod.libs ) {
 				string completeLibPath = System.IO.Path.Combine( "usr/lib", libRef.filePath );
 				this.AddFile( completeLibPath, modGroup, "SDKROOT", true, libRef.isWeak );
@@ -592,7 +589,7 @@ namespace UnityEditor.XCodeEditor
 			// Parse result object directly into file
 			PBXParser parser = new PBXParser();
 			StreamWriter saveFile = File.CreateText( System.IO.Path.Combine( this.filePath, "project.pbxproj" ) );
-			saveFile.Write( parser.Encode( result, false ) );
+			saveFile.Write( parser.Encode( result) );
 			saveFile.Close();
 
 //			Xcode4Controller.Connect();

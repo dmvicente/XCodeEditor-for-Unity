@@ -34,8 +34,7 @@ namespace UnityEditor.XCodeEditor
 		//
 		private char[] data;
 		private int index;
-//		public bool success;
-//		private int indent;
+		private int indent;
 	
 		public PBXDictionary Decode( string data )
 		{
@@ -52,12 +51,12 @@ namespace UnityEditor.XCodeEditor
 			return (PBXDictionary)ParseValue();
 		}
 
-		public string Encode( PBXDictionary pbxData, bool readable = false )
+		public string Encode( PBXDictionary pbxData)
 		{
-//			indent = 0;
+			indent = 0;
 
 			StringBuilder builder = new StringBuilder( PBX_HEADER_TOKEN, BUILDER_CAPACITY );
-			bool success = SerializeValue( pbxData, builder, readable );
+			bool success = SerializeValue( pbxData, builder);
 
 			return ( success ? builder.ToString() : null );
 		}
@@ -273,28 +272,64 @@ namespace UnityEditor.XCodeEditor
 		#endregion
 		#region Serialize
 
-		private bool SerializeValue( object value, StringBuilder builder, bool readable = false )
+		private void AppendNewline(StringBuilder builder)
 		{
+			builder.Append(WHITESPACE_NEWLINE);
+			for(int i=0; i<indent; i++)
+			{
+				builder.Append (WHITESPACE_TAB);
+			}
+		}
+
+		private void AppendLineDelim(StringBuilder builder, bool newline)
+		{
+			if(newline)
+			{
+				AppendNewline(builder);
+			}
+			else
+			{
+				builder.Append(WHITESPACE_SPACE);
+			}
+		}
+
+		private bool SerializeValue( object value, StringBuilder builder)
+		{
+
+			bool internalNewlines = false;
+			if(value is PBXObject)
+			{
+				internalNewlines = ((PBXObject)value).internalNewLines;
+			}
+			else if(value is PBXDictionary)
+			{
+				internalNewlines = ((PBXDictionary)value).internalNewLines;
+			}
+			else if(value is PBXList)
+			{
+				internalNewlines = ((PBXList)value).internalNewLines;
+			}
+
 			if( value == null ) {
 				builder.Append( "null" );
 			}
 			else if( value is PBXObject ) {
-				SerializeDictionary( ((PBXObject)value).data, builder, readable );
+				SerializeDictionary( ((PBXObject)value).data, builder, internalNewlines );
 			}
 			else if( value is Dictionary<string, object> ) {
-				SerializeDictionary( (Dictionary<string, object>)value, builder, readable );
+				SerializeDictionary( (Dictionary<string, object>)value, builder, internalNewlines );
 			}
 			else if( value.GetType().IsArray ) {
-				SerializeArray( new ArrayList( (ICollection)value ), builder, readable );
+				SerializeArray( new ArrayList( (ICollection)value ), builder, internalNewlines );
 			}
 			else if( value is ArrayList ) {
-				SerializeArray( (ArrayList)value, builder, readable );
+				SerializeArray( (ArrayList)value, builder, internalNewlines );
 			}
 			else if( value is string ) {
-				SerializeString( (string)value, builder, readable );
+				SerializeString( (string)value, builder, internalNewlines );
 			}
 			else if( value is Char ) {
-				SerializeString( Convert.ToString( (char)value ), builder, readable );
+				SerializeString( Convert.ToString( (char)value ), builder, internalNewlines );
 			}
 			else if( value is bool ) {
 				builder.Append( Convert.ToInt32( value ).ToString() );
@@ -322,37 +357,60 @@ namespace UnityEditor.XCodeEditor
 			return true;
 		}
 
-		private bool SerializeDictionary( Dictionary<string, object> dictionary, StringBuilder builder, bool readable = false )
+		private bool SerializeDictionary( Dictionary<string, object> dictionary, StringBuilder builder, bool internalNewLines )
 		{
 			builder.Append( DICTIONARY_BEGIN_TOKEN );
 
+			if(dictionary.Count > 0)
+				indent++;
+			if(internalNewLines)
+				AppendNewline(builder);
+
+			int i = 0;
 			foreach( KeyValuePair<string, object> pair in dictionary ) {
 				SerializeString( pair.Key, builder );
+				builder.Append( WHITESPACE_SPACE);
 				builder.Append( DICTIONARY_ASSIGN_TOKEN );
+				builder.Append( WHITESPACE_SPACE);
 				SerializeValue( pair.Value, builder );
 				builder.Append( DICTIONARY_ITEM_DELIMITER_TOKEN );
+
+				if (i == dictionary.Count-1) {
+					indent--;
+				}
+				AppendLineDelim(builder, internalNewLines);
+				i++;
 			}
 
 			builder.Append( DICTIONARY_END_TOKEN );
 			return true;
 		}
 
-		private bool SerializeArray( ArrayList anArray, StringBuilder builder, bool readable = false )
+		private bool SerializeArray( ArrayList anArray, StringBuilder builder, bool internalNewLines )
 		{
 			builder.Append( ARRAY_BEGIN_TOKEN );
-
+			if(anArray.Count > 0)
+				indent++;
+			if(internalNewLines)
+				AppendNewline(builder);
+			
+			
 			for( int i = 0; i < anArray.Count; i++ )
 			{
 				object value = anArray[i];
-	
+				
 				if( !SerializeValue( value, builder ) )
 				{
 					return false;
 				}
-
+				
 				builder.Append( ARRAY_ITEM_DELIMITER_TOKEN );
+				
+				if(i == anArray.Count-1)
+					indent--;
+				AppendLineDelim(builder, internalNewLines);
 			}
-	
+			
 			builder.Append( ARRAY_END_TOKEN );
 			return true;
 		}
