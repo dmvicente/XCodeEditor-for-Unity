@@ -54,6 +54,16 @@ namespace UnityEditor.XCodeEditor
 				}
 			}
 		}
+
+		public string getFileRefGuid() {
+			if (ContainsKey (FILE_REF_KEY)) {
+				object fileRefGuid = _data[FILE_REF_KEY];
+				if(fileRefGuid is string) {
+					return (string)fileRefGuid;
+				}
+			}
+			return "";
+		}
 		
 		public bool AddCompilerFlag( string flag )
 		{
