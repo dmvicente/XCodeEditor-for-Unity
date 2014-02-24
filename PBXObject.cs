@@ -24,6 +24,9 @@ namespace UnityEditor.XCodeEditor
 				
 				return _guid;
 			}
+			protected set {
+				_guid = value;
+			}
 		}
 		
 		public PBXDictionary data {

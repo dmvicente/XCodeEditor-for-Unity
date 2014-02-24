@@ -81,10 +81,18 @@ namespace UnityEditor.XCodeEditor
 		public PBXFileReference( string filePath, TreeEnum tree = TreeEnum.SOURCE_ROOT ) : base()
 		{
 			string temp = "\"" + filePath + "\"";
+			string fileName = System.IO.Path.GetFileName (filePath);
+			this.guid = GenerateFileReferenceGuid (fileName);
 			this.Add( PATH_KEY, temp );
-			this.Add( NAME_KEY, System.IO.Path.GetFileName( filePath ) );
+			this.Add( NAME_KEY, fileName);
 			this.Add( SOURCETREE_KEY, (string)( System.IO.Path.IsPathRooted( filePath ) ? trees[TreeEnum.ABSOLUTE] : trees[tree] ) );
 			this.GuessFileType();
+		}
+
+		private string GenerateFileReferenceGuid(string fileName) {
+			string fileReferenceGuid = GenerateGuid ();
+			fileReferenceGuid += " /* "+ fileName + " */";
+			return fileReferenceGuid;
 		}
 		
 		public string name {
