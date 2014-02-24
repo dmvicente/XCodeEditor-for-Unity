@@ -508,12 +508,15 @@ namespace UnityEditor.XCodeEditor
 				string completeLibPath;
 				if(libRef.sourceTree.Equals("SDKROOT")) {
 					completeLibPath = System.IO.Path.Combine( "usr/lib", libRef.filePath );
+                    PBXGroup libraryGroup = GetGroup("Libraries");
+                    this.AddFile( completeLibPath, libraryGroup, libRef.sourceTree, true, libRef.isWeak );
 				}
 				else {
 					completeLibPath = System.IO.Path.Combine( mod.path, libRef.filePath );
+                    this.AddFile( completeLibPath, modGroup, libRef.sourceTree, true, libRef.isWeak );
 				}
 					
-				this.AddFile( completeLibPath, modGroup, libRef.sourceTree, true, libRef.isWeak );
+				
 			}
 			
 			PBXGroup frameworkGroup = this.GetGroup( "Frameworks" );
